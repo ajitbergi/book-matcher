@@ -68,6 +68,9 @@ function buildCard(book) {
   const nytBadge = book.source === 'nyt'
     ? `<div class="card-nyt-badge">📰 NYT Bestseller${book.weeksOnList > 1 ? ` · ${book.weeksOnList} weeks` : ''}</div>`
     : '';
+  const ratingBadge = book.rating
+    ? `<div class="card-rating-badge">⭐ ${book.rating.toFixed(1)}</div>`
+    : '';
 
   const tags = book.genres.slice(0, 2).map(g =>
     `<span class="card-genre-tag">${g.split(' / ').pop()}</span>`).join('');
@@ -78,7 +81,10 @@ function buildCard(book) {
     ${coverHtml}
     <div class="card-cover-placeholder" ${placeholderStyle}>${emoji}</div>
     <div class="card-body">
-      ${nytBadge}
+      <div class="card-badges">
+        ${nytBadge}
+        ${ratingBadge}
+      </div>
       ${tags ? `<div class="card-genres">${tags}</div>` : ''}
       <div class="card-title">${book.title}</div>
       <div class="card-author">by ${book.author}</div>

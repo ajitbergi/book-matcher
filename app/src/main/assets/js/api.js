@@ -79,7 +79,7 @@ function isGoodBook(book) {
   if (book.source === 'nyt') return true;
   // For rated books: min 3.5 stars and at least 20 ratings
   if (book.rating !== null) {
-    if (book.rating < 3.5) return false;
+    if (book.rating < 4.0) return false;
     if (book.ratingsCount < 20) return false;
   }
   return true;

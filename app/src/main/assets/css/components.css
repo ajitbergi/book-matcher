@@ -123,11 +123,18 @@
   text-decoration: none;
 }
 .card-link:active { opacity: 0.7; }
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .card-nyt-badge {
   display: inline-flex; align-items: center; gap: 4px;
   background: var(--warn)20; color: var(--warn);
   font-size: 10px; font-weight: 700; padding: 3px 8px;
-  border-radius: 20px; margin-bottom: 8px;
+  border-radius: 20px;
+}
+.card-rating-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: #fbbf2420; color: #fbbf24;
+  font-size: 10px; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px;
 }
 
 /* swipe indicator overlays */
