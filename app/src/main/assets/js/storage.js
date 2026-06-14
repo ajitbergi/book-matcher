@@ -14,6 +14,7 @@ const KEY_SEEN         = 'bm_seen';
 const KEY_GBOOKS_KEY   = 'bm_gbooks_key';
 const KEY_NYT_KEY      = 'bm_nyt_key';
 const KEY_CLAUDE_KEY   = 'bm_claude_key';
+const KEY_SWIPE_STATS  = 'bm_swipe_stats';
 
 const isSetupDone   = ()      => LS.get(KEY_SETUP_DONE, false);
 const getCategories = ()      => LS.get(KEY_CATEGORIES, []);
@@ -34,6 +35,15 @@ function rateBook(id, stars)     { const r = getRated(); r[id] = stars; LS.set(K
 function removeLiked(id)         { LS.set(KEY_LIKED, getLiked().filter(b => b.id !== id)); }
 function isSeen(id)              { return getSeen().includes(id); }
 function isLiked(id)             { return getLiked().some(b => b.id === id); }
+
+function getSwipeStats() { return LS.get(KEY_SWIPE_STATS, {}); }
+function recordSwipe(categoryId, direction) {
+  if (!categoryId) return;
+  const stats = getSwipeStats();
+  if (!stats[categoryId]) stats[categoryId] = { right: 0, left: 0 };
+  stats[categoryId][direction]++;
+  LS.set(KEY_SWIPE_STATS, stats);
+}
 
 function saveApiKeys({ gbooks, nyt, claude }) {
   if (gbooks  !== undefined) LS.set(KEY_GBOOKS_KEY, gbooks);

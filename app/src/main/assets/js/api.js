@@ -7,10 +7,21 @@ async function fetchGoogleBooks(categoryId, maxResults = 20, startIndex = 0) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Google Books error: ${res.status}`);
   const data = await res.json();
-  return (data.items || []).map(normalizeGBook);
+  return (data.items || []).map(item => normalizeGBook(item, categoryId));
 }
 
-function normalizeGBook(item) {
+async function fetchByAuthor(author) {
+  const key = getGBooksKey();
+  if (!key) return [];
+  const q = encodeURIComponent(`inauthor:"${author}"`);
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=8&orderBy=relevance&printType=books&langRestrict=en&key=${key}`;
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.items || []).map(item => normalizeGBook(item, null));
+}
+
+function normalizeGBook(item, categoryId) {
   const v = item.volumeInfo || {};
   return {
     id: item.id,
@@ -23,7 +34,9 @@ function normalizeGBook(item) {
     pageCount: v.pageCount || null,
     published: v.publishedDate?.split('-')[0] || null,
     rating: v.averageRating || null,
+    ratingsCount: v.ratingsCount || 0,
     source: 'google',
+    category: categoryId,
   };
 }
 
@@ -50,43 +63,97 @@ function normalizeNYTBook(b) {
     pageCount: null,
     published: null,
     rating: null,
+    ratingsCount: 0,
     source: 'nyt',
+    category: null,
     nytRank: b.rank,
     weeksOnList: b.weeks_on_list,
   };
 }
 
+// ── Quality filter ────────────────────────────────────────────
+function isGoodBook(book) {
+  if (!book.cover) return false;
+  if (book.description.length < 80) return false;
+  // NYT books are pre-curated — always pass
+  if (book.source === 'nyt') return true;
+  // For rated books: min 3.5 stars and at least 20 ratings
+  if (book.rating !== null) {
+    if (book.rating < 3.5) return false;
+    if (book.ratingsCount < 20) return false;
+  }
+  return true;
+}
+
+// ── Weighted category selection ───────────────────────────────
+// Categories with higher right-swipe rate get more slots
+function pickWeightedCategories(categories, stats, n) {
+  const scored = categories.map(id => {
+    const s = stats[id] || { right: 0, left: 0 };
+    const total = s.right + s.left;
+    const score = total >= 5 ? (s.right / total) : 0.5;
+    return { id, score: Math.max(score, 0.1) };
+  });
+
+  const picked = [];
+  const pool = [...scored];
+  while (picked.length < n && pool.length > 0) {
+    const totalWeight = pool.reduce((sum, c) => sum + c.score, 0);
+    let r = Math.random() * totalWeight;
+    for (let i = 0; i < pool.length; i++) {
+      r -= pool[i].score;
+      if (r <= 0) {
+        picked.push(pool[i].id);
+        pool.splice(i, 1);
+        break;
+      }
+    }
+  }
+  return picked;
+}
+
 // ── Book pool manager ─────────────────────────────────────────
-// Fetches a mixed pool of books for the selected categories
 async function fetchBookPool(categories, count = 30) {
   const seen = getSeen();
+  const seen_set = new Set(seen);
+  const stats = getSwipeStats();
   const books = [];
 
-  // Pick up to 3 random categories to query
-  const cats = [...categories].sort(() => Math.random() - 0.5).slice(0, 3);
+  // Weighted category pick — genres the user likes more get more slots
+  const cats = pickWeightedCategories(categories, stats, Math.min(3, categories.length));
 
   for (const catId of cats) {
     try {
-      // Mix NYT (if available) and Google Books
       const nytSlug = NYT_LISTS[catId];
       if (nytSlug && getNYTKey()) {
         const nytBooks = await fetchNYTList(nytSlug);
         books.push(...nytBooks);
       }
-      const startIndex = Math.floor(Math.random() * 40);
-      const gbBooks = await fetchGoogleBooks(catId, 15, startIndex);
+      // Vary startIndex but favour lower values (more popular results)
+      const startIndex = Math.floor(Math.pow(Math.random(), 2) * 40);
+      const gbBooks = await fetchGoogleBooks(catId, 20, startIndex);
       books.push(...gbBooks);
     } catch (e) {
       console.warn('Fetch error for', catId, e.message);
     }
   }
 
-  // Deduplicate and filter already seen
-  const seen_set = new Set(seen);
-  const unique = [];
+  // Author discovery — fetch more from authors the user already liked
+  const liked = getLiked();
+  if (liked.length > 0) {
+    const authors = [...new Set(liked.map(b => b.author))];
+    const pick = authors[Math.floor(Math.random() * authors.length)];
+    try {
+      const authorBooks = await fetchByAuthor(pick);
+      books.push(...authorBooks);
+    } catch (e) {}
+  }
+
+  // Deduplicate, filter seen, apply quality filter
   const ids = new Set();
+  const unique = [];
   for (const b of books) {
-    if (!ids.has(b.id) && !seen_set.has(b.id) && b.title && b.cover) {
+    if (!ids.has(b.id) && !seen_set.has(b.id) && b.title && isGoodBook(b)) {
       ids.add(b.id);
       unique.push(b);
     }

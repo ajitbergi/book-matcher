@@ -82,12 +82,12 @@ function handleSwipe(direction, book) {
 
   animateSwipe(topCard, direction, () => {
     addSeen(book.id);
+    recordSwipe(book.category, direction);
     bookPool.shift();
 
     if (direction === 'right') {
       addLiked(book);
       showToast('Saved! ✓');
-      // Prompt to rate if they've read it
       activeBook = book;
       openRateModal(book);
     } else {
