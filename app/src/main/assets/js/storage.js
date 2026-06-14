@@ -11,7 +11,6 @@ const KEY_LIKED        = 'bm_liked';
 const KEY_DISLIKED     = 'bm_disliked';
 const KEY_RATED        = 'bm_rated';
 const KEY_SEEN         = 'bm_seen';
-const KEY_GBOOKS_KEY   = 'bm_gbooks_key';
 const KEY_NYT_KEY      = 'bm_nyt_key';
 const KEY_CLAUDE_KEY   = 'bm_claude_key';
 const KEY_SWIPE_STATS  = 'bm_swipe_stats';
@@ -22,9 +21,8 @@ const getLiked      = ()      => LS.get(KEY_LIKED, []);
 const getDisliked   = ()      => LS.get(KEY_DISLIKED, []);
 const getRated      = ()      => LS.get(KEY_RATED, {});
 const getSeen       = ()      => LS.get(KEY_SEEN, []);
-const getGBooksKey  = () => LS.get(KEY_GBOOKS_KEY, '') || CONFIG.GOOGLE_BOOKS_API_KEY;
-const getNYTKey     = () => LS.get(KEY_NYT_KEY, '')    || CONFIG.NYT_API_KEY;
-const getClaudeKey  = () => LS.get(KEY_CLAUDE_KEY, '');
+const getNYTKey    = () => LS.get(KEY_NYT_KEY, '')   || CONFIG.NYT_API_KEY;
+const getClaudeKey = () => LS.get(KEY_CLAUDE_KEY, '');
 
 function saveSetupDone()         { LS.set(KEY_SETUP_DONE, true); }
 function saveCategories(cats)    { LS.set(KEY_CATEGORIES, cats); }
@@ -45,8 +43,7 @@ function recordSwipe(categoryId, direction) {
   LS.set(KEY_SWIPE_STATS, stats);
 }
 
-function saveApiKeys({ gbooks, nyt, claude }) {
-  if (gbooks  !== undefined) LS.set(KEY_GBOOKS_KEY, gbooks);
-  if (nyt     !== undefined) LS.set(KEY_NYT_KEY, nyt);
-  if (claude  !== undefined) LS.set(KEY_CLAUDE_KEY, claude);
+function saveApiKeys({ nyt, claude }) {
+  if (nyt    !== undefined) LS.set(KEY_NYT_KEY, nyt);
+  if (claude !== undefined) LS.set(KEY_CLAUDE_KEY, claude);
 }

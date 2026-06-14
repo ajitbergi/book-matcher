@@ -1,41 +1,51 @@
-// ── Google Books ──────────────────────────────────────────────
-async function fetchGoogleBooks(categoryId, maxResults = 20, startIndex = 0) {
-  const key = getGBooksKey();
-  if (!key) throw new Error('No Google Books API key');
-  const subject = GBOOKS_SUBJECTS[categoryId] || 'subject:fiction';
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${subject}&orderBy=relevance&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&langRestrict=en&key=${key}`;
+const OL_FIELDS = 'key,title,author_name,author_key,first_publish_year,cover_i,subject,number_of_pages_median,ratings_average,ratings_count,first_sentence';
+
+// ── Open Library ──────────────────────────────────────────────
+async function fetchOpenLibrary(categoryId, limit = 20, offset = 0) {
+  const subject = OL_SUBJECTS[categoryId] || 'fiction';
+  const url = `https://openlibrary.org/search.json?subject=${encodeURIComponent(subject)}&limit=${limit}&offset=${offset}&fields=${OL_FIELDS}&language=eng`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Google Books error: ${res.status}`);
+  if (!res.ok) throw new Error(`Open Library error: ${res.status}`);
   const data = await res.json();
-  return (data.items || []).map(item => normalizeGBook(item, categoryId));
+  return (data.docs || []).map(doc => normalizeOLBook(doc, categoryId));
 }
 
 async function fetchByAuthor(author) {
-  const key = getGBooksKey();
-  if (!key) return [];
-  const q = encodeURIComponent(`inauthor:"${author}"`);
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=8&orderBy=relevance&printType=books&langRestrict=en&key=${key}`;
+  const url = `https://openlibrary.org/search.json?author=${encodeURIComponent(author)}&limit=8&fields=${OL_FIELDS}&language=eng`;
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.items || []).map(item => normalizeGBook(item, null));
+  return (data.docs || []).map(doc => normalizeOLBook(doc, null));
 }
 
-function normalizeGBook(item, categoryId) {
-  const v = item.volumeInfo || {};
+function normalizeOLBook(doc, categoryId) {
+  const coverId = doc.cover_i;
+  const cover = coverId
+    ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+    : null;
+  const key = doc.key || '';
+  const link = key ? `https://openlibrary.org${key}` : null;
+
+  let description = '';
+  if (doc.first_sentence) {
+    description = typeof doc.first_sentence === 'string'
+      ? doc.first_sentence
+      : doc.first_sentence.value || '';
+  }
+
   return {
-    id: item.id,
-    title: v.title || 'Unknown Title',
-    author: (v.authors || ['Unknown Author']).join(', '),
-    description: v.description || '',
-    cover: v.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
-    link: v.infoLink?.replace('http:', 'https:') || null,
-    genres: v.categories || [],
-    pageCount: v.pageCount || null,
-    published: v.publishedDate?.split('-')[0] || null,
-    rating: v.averageRating || null,
-    ratingsCount: v.ratingsCount || 0,
-    source: 'google',
+    id: 'ol_' + key.replace('/works/', ''),
+    title: doc.title || 'Unknown Title',
+    author: (doc.author_name || ['Unknown Author']).slice(0, 2).join(', '),
+    description,
+    cover,
+    link,
+    genres: (doc.subject || []).slice(0, 4),
+    pageCount: doc.number_of_pages_median || null,
+    published: doc.first_publish_year ? String(doc.first_publish_year) : null,
+    rating: doc.ratings_average ? Math.round(doc.ratings_average * 10) / 10 : null,
+    ratingsCount: doc.ratings_count || 0,
+    source: 'openlibrary',
     category: categoryId,
   };
 }
@@ -74,10 +84,7 @@ function normalizeNYTBook(b) {
 // ── Quality filter ────────────────────────────────────────────
 function isGoodBook(book) {
   if (!book.cover) return false;
-  if (book.description.length < 80) return false;
-  // NYT books are pre-curated — always pass
   if (book.source === 'nyt') return true;
-  // For rated books: min 3.5 stars and at least 20 ratings
   if (book.rating !== null) {
     if (book.rating < 4.0) return false;
     if (book.ratingsCount < 20) return false;
@@ -86,7 +93,6 @@ function isGoodBook(book) {
 }
 
 // ── Weighted category selection ───────────────────────────────
-// Categories with higher right-swipe rate get more slots
 function pickWeightedCategories(categories, stats, n) {
   const scored = categories.map(id => {
     const s = stats[id] || { right: 0, left: 0 };
@@ -119,7 +125,6 @@ async function fetchBookPool(categories, count = 30) {
   const stats = getSwipeStats();
   const books = [];
 
-  // Weighted category pick — genres the user likes more get more slots
   const cats = pickWeightedCategories(categories, stats, Math.min(3, categories.length));
 
   for (const catId of cats) {
@@ -129,16 +134,15 @@ async function fetchBookPool(categories, count = 30) {
         const nytBooks = await fetchNYTList(nytSlug);
         books.push(...nytBooks);
       }
-      // Vary startIndex but favour lower values (more popular results)
-      const startIndex = Math.floor(Math.pow(Math.random(), 2) * 40);
-      const gbBooks = await fetchGoogleBooks(catId, 20, startIndex);
-      books.push(...gbBooks);
+      const offset = Math.floor(Math.pow(Math.random(), 2) * 60);
+      const olBooks = await fetchOpenLibrary(catId, 20, offset);
+      books.push(...olBooks);
     } catch (e) {
       console.warn('Fetch error for', catId, e.message);
     }
   }
 
-  // Author discovery — fetch more from authors the user already liked
+  // Author discovery
   const liked = getLiked();
   if (liked.length > 0) {
     const authors = [...new Set(liked.map(b => b.author))];

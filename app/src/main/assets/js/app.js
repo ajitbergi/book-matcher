@@ -192,7 +192,6 @@ function closeModal(id) { document.getElementById(id).classList.remove('visible'
 // ── Settings save ─────────────────────────────────────────────
 function saveSettings() {
   saveApiKeys({
-    gbooks: document.getElementById('input-gbooks').value.trim(),
     nyt:    document.getElementById('input-nyt').value.trim(),
     claude: document.getElementById('input-claude').value.trim(),
   });

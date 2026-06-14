@@ -1,25 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
 :root {
-  --bg: #0f0e17;
-  --surface: #1a1825;
-  --surface2: #242236;
-  --border: #2e2b45;
-  --accent: #e8944a;
-  --accent2: #a78bfa;
-  --green: #34d399;
-  --red: #f87171;
-  --text: #ede9fe;
-  --muted: #6b6888;
-  --warn: #fbbf24;
-  --card-bg: #1e1c2e;
+  --bg:       #0d0b1e;
+  --surface:  #16133a;
+  --surface2: #1e1952;
+  --border:   #2d2a5e;
+  --accent:   #a855f7;
+  --accent2:  #ec4899;
+  --green:    #4ade80;
+  --red:      #f87171;
+  --text:     #f0ecff;
+  --muted:    #7c79a8;
+  --warn:     #fbbf24;
+  --card-bg:  #131030;
+  --grad:     linear-gradient(135deg, #a855f7, #ec4899);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; }
 body {
   background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 5%,  rgba(168,85,247,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 95%, rgba(236,72,153,0.10) 0%, transparent 55%);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   user-select: none;
 }

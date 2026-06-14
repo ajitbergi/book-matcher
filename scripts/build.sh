@@ -26,11 +26,10 @@ get_secret() {
 }
 
 echo "Fetching secrets..."
-GOOGLE_BOOKS_API_KEY=$(get_secret "GOOGLE_BOOKS_API_KEY")
 NYT_API_KEY=$(get_secret "NYT_API_KEY")
 
-if [ -z "$GOOGLE_BOOKS_API_KEY" ] || [ -z "$NYT_API_KEY" ]; then
-  echo "Failed to fetch secrets — check INFISICAL_PROJECT_ID and INFISICAL_ENV in .env"
+if [ -z "$NYT_API_KEY" ]; then
+  echo "Failed to fetch NYT_API_KEY — check INFISICAL_PROJECT_ID and INFISICAL_ENV in .env"
   exit 1
 fi
 echo "Secrets fetched."
@@ -40,7 +39,6 @@ cd "$SCRIPT_DIR/.."
 cat > app/src/main/assets/js/config.js <<EOF
 // Keys injected at build time from Infisical
 const CONFIG = {
-  GOOGLE_BOOKS_API_KEY: '${GOOGLE_BOOKS_API_KEY}',
   NYT_API_KEY: '${NYT_API_KEY}',
 };
 EOF
