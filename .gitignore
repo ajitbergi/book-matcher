@@ -1,3 +1,7 @@
+# Secrets — never commit
+.env
+app/src/main/assets/js/config.js
+
 .gradle/
 build/
 local.properties

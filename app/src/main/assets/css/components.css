@@ -72,8 +72,7 @@
   touch-action: none;
   cursor: grab;
 }
-.swipe-card:nth-child(2) { transform: scale(0.95) translateY(12px); z-index: 1; }
-.swipe-card:nth-child(3) { transform: scale(0.90) translateY(24px); z-index: 0; }
+.swipe-card:not(.top) { display: none; }
 .swipe-card.top { z-index: 10; cursor: grab; }
 .swipe-card.top:active { cursor: grabbing; }
 .swipe-card.flying-right {
@@ -118,6 +117,12 @@
   display: -webkit-box; -webkit-line-clamp: 3;
   -webkit-box-orient: vertical; overflow: hidden;
 }
+.card-link {
+  display: inline-block; margin-top: 10px;
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  text-decoration: none;
+}
+.card-link:active { opacity: 0.7; }
 .card-nyt-badge {
   display: inline-flex; align-items: center; gap: 4px;
   background: var(--warn)20; color: var(--warn);

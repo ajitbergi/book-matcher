@@ -83,6 +83,7 @@ function buildCard(book) {
       <div class="card-title">${book.title}</div>
       <div class="card-author">by ${book.author}</div>
       ${book.description ? `<div class="card-desc">${book.description}</div>` : ''}
+      ${book.link ? `<a class="card-link" href="${book.link}" onclick="event.stopPropagation()">View on Google Books ↗</a>` : ''}
     </div>
   `;
   return card;

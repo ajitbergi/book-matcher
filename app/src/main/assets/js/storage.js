@@ -21,9 +21,9 @@ const getLiked      = ()      => LS.get(KEY_LIKED, []);
 const getDisliked   = ()      => LS.get(KEY_DISLIKED, []);
 const getRated      = ()      => LS.get(KEY_RATED, {});
 const getSeen       = ()      => LS.get(KEY_SEEN, []);
-const getGBooksKey  = ()      => LS.get(KEY_GBOOKS_KEY, '');
-const getNYTKey     = ()      => LS.get(KEY_NYT_KEY, '');
-const getClaudeKey  = ()      => LS.get(KEY_CLAUDE_KEY, '');
+const getGBooksKey  = () => LS.get(KEY_GBOOKS_KEY, '') || CONFIG.GOOGLE_BOOKS_API_KEY;
+const getNYTKey     = () => LS.get(KEY_NYT_KEY, '')    || CONFIG.NYT_API_KEY;
+const getClaudeKey  = () => LS.get(KEY_CLAUDE_KEY, '');
 
 function saveSetupDone()         { LS.set(KEY_SETUP_DONE, true); }
 function saveCategories(cats)    { LS.set(KEY_CATEGORIES, cats); }

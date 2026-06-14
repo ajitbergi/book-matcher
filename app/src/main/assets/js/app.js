@@ -134,6 +134,7 @@ function openBookDetail(bookId) {
       ${[1,2,3,4,5].map(i => `<span class="star${i <= stars ? ' filled' : ''}">★</span>`).join('')}
       ${stars ? `<span style="font-size:12px;color:var(--muted);margin-left:6px">Your rating</span>` : ''}
     </div>
+    ${book.link ? `<a class="card-link" href="${book.link}" style="display:block;margin-bottom:16px">View on Google Books ↗</a>` : ''}
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="openRateModal(activeBook)">⭐ Rate</button>
       <button class="btn btn-ghost" onclick="removeFromLibrary('${book.id}')">🗑 Remove</button>
