@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Book Matcher</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ── ONBOARDING ── -->
+  <div id="screen-onboarding" class="screen active">
+    <div class="onboarding">
+      <div class="onboarding-hero">
+        <div class="logo">📚</div>
+        <h1>Book Matcher</h1>
+        <p>Swipe to discover books you'll love.<br>Pick at least 3 genres to get started.</p>
+      </div>
+      <div class="onboarding-label">What do you love to read?</div>
+      <div class="category-grid" id="category-grid"></div>
+      <div class="onboarding-hint" id="onboarding-hint">Select 3 or more genres</div>
+      <button class="btn btn-primary btn-full" id="onboarding-btn" onclick="finishOnboarding()" disabled>
+        Pick at least 3 more
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SWIPE ── -->
+  <div id="screen-swipe" class="screen">
+    <div class="topbar">
+      <div class="topbar-title">Book<span>Matcher</span></div>
+      <button class="topbar-btn" onclick="navigate('settings')">⚙️</button>
+    </div>
+    <div class="deck-tabs" id="deck-tabs"></div>
+    <div class="deck-area" id="deck-area"></div>
+    <div class="swipe-actions">
+      <button class="action-btn reject" onclick="swipeLeft()" title="Skip">✕</button>
+      <button class="action-btn info"   onclick="bookPool[0] && openRateModal(bookPool[0])" title="Rate">⭐</button>
+      <button class="action-btn accept" onclick="swipeRight()" title="Save">♥</button>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-btn active" data-screen="swipe"    onclick="navigate('swipe')">
+        <span class="nav-icon">🃏</span>Discover
+      </button>
+      <button class="nav-btn" data-screen="library"  onclick="navigate('library')">
+        <span class="nav-icon">📚</span>Library
+      </button>
+      <button class="nav-btn" data-screen="settings" onclick="navigate('settings')">
+        <span class="nav-icon">⚙️</span>Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- ── LIBRARY ── -->
+  <div id="screen-library" class="screen">
+    <div class="topbar">
+      <div class="topbar-title">My <span>Library</span></div>
+    </div>
+    <div class="lib-tabs">
+      <button class="lib-tab active" data-tab="saved"  onclick="switchLibTab('saved')">💾 Saved</button>
+      <button class="lib-tab"        data-tab="rated"  onclick="switchLibTab('rated')">⭐ Rated</button>
+    </div>
+    <div class="scroll-area" id="lib-content"></div>
+    <div class="bottom-nav">
+      <button class="nav-btn" data-screen="swipe"    onclick="navigate('swipe')">
+        <span class="nav-icon">🃏</span>Discover
+      </button>
+      <button class="nav-btn active" data-screen="library"  onclick="navigate('library')">
+        <span class="nav-icon">📚</span>Library
+      </button>
+      <button class="nav-btn" data-screen="settings" onclick="navigate('settings')">
+        <span class="nav-icon">⚙️</span>Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS ── -->
+  <div id="screen-settings" class="screen">
+    <div class="topbar">
+      <div class="topbar-title">⚙️ <span>Settings</span></div>
+    </div>
+    <div class="scroll-area">
+      <div class="settings-list">
+        <div class="settings-section-label">API Keys</div>
+
+        <div class="settings-row">
+          <label>Google Books API Key</label>
+          <input id="input-gbooks" class="settings-input" type="password" placeholder="AIza..." />
+          <div class="settings-hint">Required for book search and covers</div>
+        </div>
+
+        <div class="settings-row">
+          <label>NYT Books API Key</label>
+          <input id="input-nyt" class="settings-input" type="password" placeholder="NYT key..." />
+          <div class="settings-hint">For trending bestseller lists</div>
+        </div>
+
+        <div class="settings-row">
+          <label>Claude API Key (optional)</label>
+          <input id="input-claude" class="settings-input" type="password" placeholder="sk-ant-..." />
+          <div class="settings-hint">For AI-powered recommendations</div>
+        </div>
+
+        <button class="btn btn-primary btn-full" onclick="saveSettings()">Save Keys</button>
+
+        <div class="settings-section-label">Preferences</div>
+
+        <div class="settings-row-inline" onclick="goEditCategories()">
+          <span class="s-label">My Genres</span>
+          <span class="s-value" id="setting-categories"></span>
+        </div>
+
+        <div class="settings-row-inline" onclick="if(confirm('Reset all data?')){localStorage.clear();location.reload();}">
+          <span class="s-label" style="color:var(--red)">Reset App</span>
+          <span class="s-value">Clear all data →</span>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-btn" data-screen="swipe"    onclick="navigate('swipe')">
+        <span class="nav-icon">🃏</span>Discover
+      </button>
+      <button class="nav-btn" data-screen="library"  onclick="navigate('library')">
+        <span class="nav-icon">📚</span>Library
+      </button>
+      <button class="nav-btn active" data-screen="settings" onclick="navigate('settings')">
+        <span class="nav-icon">⚙️</span>Settings
+      </button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Book Detail Modal -->
+<div id="modal-detail" class="modal-backdrop" onclick="if(event.target===this)closeModal('modal-detail')">
+  <div class="modal-sheet"></div>
+</div>
+
+<!-- Rate Modal -->
+<div id="modal-rate" class="modal-backdrop" onclick="if(event.target===this)closeModal('modal-rate')">
+  <div class="modal-sheet">
+    <div class="rate-prompt"></div>
+    <div class="star-picker">
+      <button class="star-pick">★</button>
+      <button class="star-pick">★</button>
+      <button class="star-pick">★</button>
+      <button class="star-pick">★</button>
+      <button class="star-pick">★</button>
+    </div>
+    <div class="rate-actions">
+      <button class="btn btn-ghost" id="btn-rate-skip">Not yet</button>
+      <button class="btn btn-primary" style="flex:1" id="btn-rate-save">Save Rating</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- JS load order: data → storage → state → api → swipe → render → app -->
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/state.js"></script>
+<script src="js/api.js"></script>
+<script src="js/swipe.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
